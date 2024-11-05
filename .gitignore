@@ -1,0 +1,82 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+*.env
+*.venv
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Python debug files
+*.pdb
+*.sqlite3
+
+# Docker
+*.log
+docker-compose*.yaml
+*.pid
+docker-compose.override.yaml
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Pytest
+.pytest_cache/
+*.cover
+.coverage
+*.xml
+
+# Logs
+*.log
+*.out
+
+# VS Code settings
+.vscode/
+
+# MacOS files
+.DS_Store
+
+# Coverage reports
+htmlcov/
+.tox/
+.cache/
+.coverage
+coverage.xml
+
+# Ignore Pydantic cache
+*.mypy_cache
+
+# FastAPI auto-generated files
+*.db
+*.sqlite
+
+# Ignore output for FastAPI
+*.pid
+*.swp
+
+# Ignore compiled Python files
+*.pyo
+
+# Other IDE settings (JetBrains)
+.idea/
+
+# Ollama downloads and data
+ollama_data/
+
+# Ignore secrets and config files
+*.yaml
+
+# Chroma database files
+chroma_index/
+chroma_logs/
+chroma_data/
+chroma.db
+chroma.sqlite
