@@ -1,7 +1,7 @@
-Run this to build the image 
+Run this to build the containers and their respective images
 
-docker build --no-cache -t ragapp:v1 . 
+docker compose build --no-cache  
 
-To run the built image 
+To run the built services
 
-docker run -p 8000:8000 -p 11434:11434 ragapp:v1   
+docker compose up
