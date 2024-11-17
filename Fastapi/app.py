@@ -12,6 +12,7 @@ from langchain.prompts import PromptTemplate
 import os
 import requests
 from langchain.schema import Document 
+import pandas as pd
 app = FastAPI()
 
 class Query(BaseModel):
@@ -50,56 +51,76 @@ def home():
     return {"message": "API is running"}
 
 @app.post('/embedToModel')
-def embed_to_model(file_path: str, force: bool = False):
+def embed_to_model(force: bool = False):
     """
-    Endpoint to embed content from a file into the vector store.
+    Endpoint to embed content from the CSV file into the vector store.
     """
     try:
-        # Step 1: Check if embedding already exists for the given CostalData
+        # Step 1: Check if embedding already exists for the given file
+        file_path = "indian_cities_with_state_and_coast_data.csv"
         existing_docs = vector_store.get(
             where={"CostalData": file_path},
             include=["documents", "metadatas"]
         )
         existing_ids = existing_docs.get("ids", [])
         
-        # If embeddings exist and force is not set, skip embedding
         if existing_docs and not force and existing_ids:
             return {"message": f"Data for '{file_path}' is already embedded."}
         
         # If force=True, delete existing documents
         if force and existing_ids:
             vector_store.delete(ids=existing_ids)
-
-        # Step 2: Read the file content
+        
+        # Step 2: Read the CSV file
         try:
-            with open(file_path, 'r') as file:
-                file_content = file.read()
+            df = pd.read_csv(file_path)
         except FileNotFoundError:
             raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
         
-        # Step 3: Prepare content for embedding
-        document = Document(
-            page_content=file_content,
-            metadata={"CostalData": file_path}
-        )
+        # Step 3: Prepare documents for embedding
+        documents = []
+        for _, row in df.iterrows():
+            lat = row['lat']
+            lng = row['lng']
+            city = row['city']
+            state = row['State']
+            nearest_coast = row['Nearest_Sea_Coast']
+            distance_to_coast = row['Distance_to_Sea_Coast_km']
+            
+            content = f"City: {city}, State: {state}, Latitude: {lat}, Longitude: {lng}, Nearest Coast: {nearest_coast}, Distance to Coast: {distance_to_coast} km"
+            
+            document = Document(
+                page_content=content,
+                metadata={
+                    "city": city,
+                    "state": state,
+                    "lat": lat,
+                    "lng": lng,
+                    "nearest_coast": nearest_coast,
+                    "distance_to_coast": distance_to_coast,
+                    "CostalData": file_path
+                }
+            )
+            documents.append(document)
         
-        # Step 4: Add document to ChromaDB
-        vector_store.add_documents([document])
+        # Step 4: Add documents to ChromaDB
+        vector_store.add_documents(documents)
 
         return {"message": f"Data from '{file_path}' has been successfully embedded."}
-
+    
     except Exception as e:
         logger.error(f"Error while embedding: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Embedding failed: {str(e)}")
-
+    
 @app.post('/askEmbeddedModel')
-def ask_embedded_model(query: str, file_path: str):
+def ask_embedded_model(query: str):
     """
     Endpoint to query the embedded data based on CostalData metadata.
     """
     try:
+        file_path = "indian_cities_with_state_and_coast_data.csv"
         # Step 1: Check if embeddings exist for the given CostalData
         existing_docs = vector_store.get(
             where={"CostalData": file_path},
